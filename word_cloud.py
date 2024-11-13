@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import json
 
 
-def get_word_counts(file_name):
+def get_word_counts(query):
     """
     从指定的JSON文件中加载词频数据。
 
@@ -15,14 +15,14 @@ def get_word_counts(file_name):
     - word_counts: 一个字典，其中键是单词，值是这些单词在特定语境下的出现次数。
     """
     # 打开文件并加载JSON格式的词频数据
+    file_name = f"{query}_word_counts.json"
     with open(file_name, 'r', encoding='utf-8') as f:
         word_counts = json.load(f)
-
     # 返回解析后的词频数据
     return word_counts
 
 
-def get_wordcloud(word_counts):
+def get_wordcloud(word_counts,query):
     """
     根据单词频率生成词云。
     该函数创建了一个词云对象，并设置了各种属性以定制词云的外观。
@@ -48,9 +48,10 @@ def get_wordcloud(word_counts):
     plt.axis("off")  # 关闭坐标轴
     plt.show()  # 显示图像
 
+    wordCloud_name = f"{query}_word_cloud.png"
     # 如果你想保存词云为图片文件
-    wordcloud.to_file('wordcloud.png')
-
+    wordcloud.to_file(wordCloud_name)
+    print(f'WordCloud of {query} has been saved as {wordCloud_name}!')
 
 def main():
     file_name = 'calc.json'
