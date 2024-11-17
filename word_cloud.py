@@ -1,7 +1,8 @@
 from wordcloud import WordCloud
 import matplotlib.pyplot as plt
-
+import numpy as np
 import json
+from PIL import Image
 
 
 def get_word_counts(query):
@@ -31,6 +32,7 @@ def get_wordcloud(word_counts,query):
     参数:
     word_counts (dict): 单词频率的字典，键为单词，值为频率。
     """
+    mask = np.array(Image.open("mask.png"))
     # 创建词云对象并设置属性
     wordcloud = WordCloud(
         background_color='white',  # 设置背景颜色
@@ -39,7 +41,8 @@ def get_wordcloud(word_counts,query):
         contour_width=3,            # 轮廓宽度
         contour_color='steelblue',   # 轮廓颜色
         width = 1600,               #图片宽度
-        height = 1200               #图片高度
+        height = 1200,               #图片高度
+        mask = mask
     ).generate_from_frequencies(word_counts)
 
     # 使用 matplotlib 显示词云
@@ -54,9 +57,9 @@ def get_wordcloud(word_counts,query):
     print(f'WordCloud of {query} has been saved as {wordCloud_name}!')
 
 def main():
-    file_name = 'calc.json'
-    word_counts = get_word_counts(file_name)
-    get_wordcloud(word_counts)
+    query = "Computer"
+    word_counts = get_word_counts(query)
+    get_wordcloud(word_counts,query)
 
 if __name__ == "__main__":
     main()
