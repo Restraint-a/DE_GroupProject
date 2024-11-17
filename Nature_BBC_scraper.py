@@ -14,6 +14,8 @@ import re
 # 确保 nltk 的停用词被下载（如果没下载过）
 # nltk.download("punkt")
 # nltk.download("stopwords")
+# import nltk
+# nltk.download('averaged_perceptron_tagger_eng')
 
 # 手动排除一些无意义高频词
 domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article"}
@@ -28,6 +30,12 @@ def init_browser():
     service = Service("D:/Anaconda/chromedriver.exe")  # 替换为你的 ChromeDriver 路径
     browser = webdriver.Chrome(service=service, options=chrome_options)
     return browser
+
+def remove_chinese(text):
+    """
+    移除文本中的中文字符。
+    """
+    return re.sub(r'[\u4e00-\u9fff]+', '', text)
 
 def get_nature_links(query, browser, link_count=10):
     """
@@ -119,21 +127,86 @@ def fetch_article_text(url, browser):
         print(f"请求失败: {url} 错误: {e}")
         return ""
 
+def fetch_article_text_nature(url, browser):
+    """
+    使用 Selenium 获取动态生成的网页内容，并提取文章标题和摘要。
+    """
+    try:
+        # 访问文章页面
+        browser.get(url)
+        time.sleep(5)  # 等待页面加载
+
+        # 解析页面内容
+        soup = BeautifulSoup(browser.page_source, "html.parser")
+
+        # 提取标题
+        title_element = soup.find("h1", class_="c-article-title", attrs={"data-test": "article-title"})
+        title = title_element.get_text(strip=True) if title_element else "标题未找到"
+
+        # 提取摘要
+        abstract_element = soup.find("div", class_="c-article-section__content", id="Abs1-content")
+        abstract = abstract_element.get_text(strip=True) if abstract_element else "摘要未找到"
+
+        return abstract  # 只返回摘要文本
+
+    except Exception as e:
+        print(f"请求失败: {url} 错误: {e}")
+        return "摘要未找到"  # 如果出错，返回一个默认的摘要
+
+
 def count_words_in_articles(urls, browser):
     """
     统计一组文章中每个单词的出现次数，排除停用词。
     """
     all_words = Counter()
     stop_words = set(stopwords.words("english"))
+
+    domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article"}
+
+    # 定义名词和动词的词性标签
+    allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"}
+
     for url in urls:
         print(f"正在处理: {url}")
         article_text = fetch_article_text(url, browser)
         words = word_tokenize(article_text.lower())
 
-         # 过滤停用词和领域无意义词
+        # 词性标注
+        tagged_words = nltk.pos_tag(words)
+
+        # 过滤停用词、领域停用词以及非名词/动词
         filtered_words = [
-            word for word in words
-            if word.isalpha() and len(word) > 2 and word not in stop_words and word not in domain_specific_stopwords
+            word for word, pos in tagged_words
+            if word.isalpha() and word not in stop_words and word not in domain_specific_stopwords and pos in allowed_pos
+        ]
+
+        all_words.update(filtered_words)
+    return all_words
+
+def count_words_in_articles_nature(urls, browser):
+    """
+    统计一组文章中每个单词的出现次数，排除停用词。
+    """
+    all_words = Counter()
+    stop_words = set(stopwords.words("english"))
+
+    domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article"}
+
+    # 定义名词和动词的词性标签
+    allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"}
+
+    for url in urls:
+        print(f"正在处理: {url}")
+        article_text = fetch_article_text_nature(url, browser)
+        words = word_tokenize(article_text.lower())
+
+        # 词性标注
+        tagged_words = nltk.pos_tag(words)
+
+        # 过滤停用词、领域停用词以及非名词/动词
+        filtered_words = [
+            word for word, pos in tagged_words
+            if word.isalpha() and word not in stop_words and word not in domain_specific_stopwords and pos in allowed_pos
         ]
 
         all_words.update(filtered_words)
@@ -143,8 +216,12 @@ def save_to_json(word_counts, filename):
     """
     将统计结果保存为 JSON 文件。
     """
+     # 使用 remove_chinese 函数移除中文
+    filtered_word_counts = {remove_chinese(key): value for key, value in word_counts.items()}
+
+    # 写入 JSON 文件
     with open(filename, "w", encoding="utf-8") as f:
-        json.dump(word_counts, f, indent=4)
+        json.dump(filtered_word_counts, f, indent=4)
     print(f"结果已保存到 {filename}")
 
 def selenium_crawl(query, source="nature", link_count=10):
@@ -161,8 +238,12 @@ def selenium_crawl(query, source="nature", link_count=10):
             raise ValueError("Unsupported source. Please choose 'nature' or 'bbc'.")
 
         print(f"从 {source} 获取的链接数量: {len(urls)}")
-        word_counts = count_words_in_articles(urls, browser)
-        save_to_json(word_counts, filename=f"{query}_{source}_word_counts.json")
+        if source == "nature":
+            word_counts = count_words_in_articles_nature(urls, browser)
+            save_to_json(word_counts, filename=f"{query}_{source}_word_counts.json")
+        elif source == "bbc":
+            word_counts = count_words_in_articles(urls, browser)
+            save_to_json(word_counts, filename=f"{query}_{source}_word_counts.json")
     finally:
         browser.quit()  # 确保关闭浏览器
 
