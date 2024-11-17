@@ -190,7 +190,7 @@ def count_words_in_articles_nature(urls, browser):
     all_words = Counter()
     stop_words = set(stopwords.words("english"))
 
-    domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article"}
+    domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article" }
 
     # 定义名词和动词的词性标签
     allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"}
