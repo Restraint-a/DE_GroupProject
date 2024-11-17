@@ -17,8 +17,6 @@ import re
 # import nltk
 # nltk.download('averaged_perceptron_tagger_eng')
 
-# 手动排除一些无意义高频词
-domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article"}
 
 # 配置 Chrome Driver
 def init_browser():
@@ -161,10 +159,10 @@ def count_words_in_articles(urls, browser):
     all_words = Counter()
     stop_words = set(stopwords.words("english"))
 
-    domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article"}
+    domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article", "bbc", "office", "said"}
 
-    # 定义名词和动词的词性标签
-    allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"}
+    # 定义名词、动词和形容词的词性标签
+    allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "JJ", "JJR", "JJS"}
 
     for url in urls:
         print(f"正在处理: {url}")
@@ -177,7 +175,7 @@ def count_words_in_articles(urls, browser):
         # 过滤停用词、领域停用词以及非名词/动词
         filtered_words = [
             word for word, pos in tagged_words
-            if word.isalpha() and word not in stop_words and word not in domain_specific_stopwords and pos in allowed_pos
+            if word.isalpha() and len(word) > 2 and word not in stop_words and word not in domain_specific_stopwords and pos in allowed_pos
         ]
 
         all_words.update(filtered_words)
@@ -192,8 +190,8 @@ def count_words_in_articles_nature(urls, browser):
 
     domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article" }
 
-    # 定义名词和动词的词性标签
-    allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ"}
+     # 定义名词、动词和形容词的词性标签
+    allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "JJ", "JJR", "JJS"}
 
     for url in urls:
         print(f"正在处理: {url}")
@@ -206,7 +204,7 @@ def count_words_in_articles_nature(urls, browser):
         # 过滤停用词、领域停用词以及非名词/动词
         filtered_words = [
             word for word, pos in tagged_words
-            if word.isalpha() and word not in stop_words and word not in domain_specific_stopwords and pos in allowed_pos
+            if word.isalpha() and len(word) > 2 and word not in stop_words and word not in domain_specific_stopwords and pos in allowed_pos
         ]
 
         all_words.update(filtered_words)
