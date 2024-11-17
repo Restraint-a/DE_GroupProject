@@ -15,6 +15,9 @@ import re
 # nltk.download("punkt")
 # nltk.download("stopwords")
 
+# 手动排除一些无意义高频词
+domain_specific_stopwords = {"google", "scholar", "nature", "www", "https", "com", "article"}
+
 # 配置 Chrome Driver
 def init_browser():
     chrome_options = Options()
@@ -26,25 +29,40 @@ def init_browser():
     browser = webdriver.Chrome(service=service, options=chrome_options)
     return browser
 
-def get_medium_links(query, browser, link_count=10):
+def get_nature_links(query, browser, link_count=10):
     """
-    从 Medium 搜索页面获取文章链接。
+    从 nature 搜索页面获取文章链接。
     """
-    search_url = f"https://medium.com/search?q={query}"
+    search_url = f"https://www.nature.com/search?q={query}&order=relevance"
     browser.get(search_url)
-    time.sleep(3)  # 等待页面加载
+    time.sleep(5)  # 等待页面加载
 
-    soup = BeautifulSoup(browser.page_source, "html.parser")
     links = []
-    for link in soup.find_all("a", href=True):
-        if "medium.com" in link["href"]:
-            # 拼接完整链接
-            full_link = f"https://medium.com{link['href']}"
-            links.append(full_link)
+    while len(links) < link_count:
+        soup = BeautifulSoup(browser.page_source, "html.parser")
 
-            # 如果达到了需要的数量，提前退出循环
-            if len(links) >= link_count:
-                break
+        # 提取符合条件的链接
+        for link in soup.find_all("a", href=True):
+            if "articles" in link["href"]:
+                full_link = f"https://www.nature.com{link['href']}"
+                links.append(full_link)
+
+                if len(links) >= link_count:
+                    break
+
+        # 如果达到了链接数量，就退出
+        if len(links) >= link_count:
+            break
+
+        # 查找并点击“下一页”按钮
+        try:
+            next_button = browser.find_element(By.CSS_SELECTOR, "a.c-pagination__link span")
+            next_button.click()  # 点击下一页
+            time.sleep(3)  # 等待页面加载
+        except Exception as e:
+            print(f"没有找到下一页按钮或翻页出错，停止翻页：{e}")
+            break
+
     print(f"提取到的有效链接: {links}")
     return links
 
@@ -111,7 +129,13 @@ def count_words_in_articles(urls, browser):
         print(f"正在处理: {url}")
         article_text = fetch_article_text(url, browser)
         words = word_tokenize(article_text.lower())
-        filtered_words = [word for word in words if word.isalpha() and word not in stop_words]
+
+         # 过滤停用词和领域无意义词
+        filtered_words = [
+            word for word in words
+            if word.isalpha() and len(word) > 2 and word not in stop_words and word not in domain_specific_stopwords
+        ]
+
         all_words.update(filtered_words)
     return all_words
 
@@ -123,18 +147,18 @@ def save_to_json(word_counts, filename):
         json.dump(word_counts, f, indent=4)
     print(f"结果已保存到 {filename}")
 
-def selenium_crawl(query, source="medium", link_count=10):
+def selenium_crawl(query, source="nature", link_count=10):
     """
     主爬取函数，调用 Selenium 浏览器并获取指定平台的文章链接。
     """
     browser = init_browser()
     try:
-        if source == "medium":
-            urls = get_medium_links(query, browser, link_count)
+        if source == "nature":
+            urls = get_nature_links(query, browser, link_count)
         elif source == "bbc":
             urls = get_bbc_links(query, browser, link_count)
         else:
-            raise ValueError("Unsupported source. Please choose 'medium' or 'bbc'.")
+            raise ValueError("Unsupported source. Please choose 'nature' or 'bbc'.")
 
         print(f"从 {source} 获取的链接数量: {len(urls)}")
         word_counts = count_words_in_articles(urls, browser)
@@ -147,7 +171,7 @@ def main():
     主程序，接收用户输入并调用爬取逻辑。
     """
     query = input("请输入搜索关键词: ")
-    source = input("请选择数据来源 (medium/bbc): ").lower()
+    source = input("请选择数据来源 (nature/bbc): ").lower()
 
     try:
         link_count = int(input("请输入获取链接的数量 (例如: 10, 20): "))
