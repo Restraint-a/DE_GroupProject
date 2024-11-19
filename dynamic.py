@@ -1,92 +1,51 @@
-import requests
-from bs4 import BeautifulSoup
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
-from collections import Counter
-import json
-import re
 from word_cloud import get_word_counts,get_wordcloud
-import os
+from scrapper import get_search_links,count_words_in_articles,save_to_json
+from selenium_scraper import selenium_crawl
+from Nature_BBC_scraper import selenium_crawl
+import json
+from collections import defaultdict
 
-# 确保nltk的停用词被下载（如果没下载过）
-import nltk
-nltk.download("punkt")
-nltk.download("stopwords")
+def json_merge(query, *files):
+        # 创建一个默认字典，用于存储合并后的结果
+    merged_data = defaultdict(int)
 
-def get_search_links(query):
-    """
-    根据查询字符串获取Google搜索结果中的链接。
+    # 遍历所有提供的文件名
+    for file_name in files:
+        try:
+            # 打开并读取每个JSON文件
+            with open(file_name, 'r', encoding='utf-8') as file:
+                data = json.load(file)  # 将文件内容加载为字典
 
-    参数:
-    query (str): 要搜索的查询字符串。
+                # 遍历字典中的每个键值对
+                for key, value in data.items():
+                    # 将相同键的值累加
+                    merged_data[key] += value
+        except FileNotFoundError:
+            print(f"Warning: File {file_name} not found and will be skipped.")
+        except json.JSONDecodeError:
+            print(f"Warning: File {file_name} is not a valid JSON and will be skipped.")
 
-    返回:
-    list: 一个包含搜索结果中URL的列表。
-    """
-    url = f"https://www.google.com/search?q={query}"
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
+    output_file = f"{query}_word_counts.json"
+    # 将合并后的数据保存到新的JSON文件中
+    with open(output_file, 'w', encoding='utf-8') as output_file:
+        json.dump(dict(merged_data), output_file, ensure_ascii=False, indent=4)
 
-    urls = []
-    for link in soup.find_all("a"):
-        href = link.get("href")
-        if href and ("/url?q=" in href or href.startswith("http")) and "translate.google.com/translate" not in href:
-            if "/url?q=" in href:
-                href = href.split("/url?q=")[1].split("&")[0]
-            urls.append(href)
-    print("url length:", len(urls))
-    return urls[10:40]
+    print(f"Files have been successfully merged into {output_file.name}")
 
-def fetch_article_text(url):
-    """
-    根据给定的URL获取文章的文本内容，并过滤出只包含英文字符的内容。
+def Nature_BBC_crawl(query):
+    source = input("请选择数据来源 (nature/bbc): ").lower()
 
-    参数:
-    url (str): 文章的URL。
-
-    返回:
-    str: 过滤后的英文文本内容。
-    """
     try:
-        response = requests.get(url, headers={
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        })
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, "html.parser")
-        text = " ".join([p.get_text() for p in soup.find_all("p")])
-        english_text = re.sub(r"[^a-zA-Z\s]", "", text)
-        return english_text
-    except requests.RequestException as e:
-        print(f"请求失败: {url} 错误: {e}")
-        return ""
+        link_count = int(input("请输入获取链接的数量 (例如: 10, 20): "))
+        if link_count <= 0:
+            raise ValueError("链接数量必须大于 0。")
+    except ValueError as e:
+        print(f"输入无效: {e}. 默认设置为 10。")
+        link_count = 10
 
-def count_words_in_articles(urls):
-    """
-    统计一组文章中每个单词的出现次数，排除停用词。
 
-    参数:
-    urls (list of str): 文章的URL列表。
+    selenium_crawl(query, source, link_count)
 
-    返回:
-    Counter: 包含每个单词及其出现次数的Counter对象。
-    """
-    all_words = Counter()
-    stop_words = set(stopwords.words("english"))
-    for url in urls:
-        print(f"正在处理: {url}")
-        article_text = fetch_article_text(url)
-        words = word_tokenize(article_text.lower())
-        filtered_words = [word for word in words if word.isalpha() and word not in stop_words]
-        all_words.update(filtered_words)
-    return all_words
-
-def save_to_json(word_counts, filename):
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(word_counts, f, indent=4)
-    print(f"结果已保存到 {filename}")
 
 def dynamic_crawl(query):
     """
@@ -99,12 +58,16 @@ def dynamic_crawl(query):
     print("urls length: ", len(urls))
     print("urls :", urls)
     word_counts = count_words_in_articles(urls)
-    save_to_json(word_counts, filename=f"{query}_word_counts.json")
+    save_to_json(word_counts, filename=f"{query}_scrapper_word_counts.json")
 
 def main():
     while True:
         query = input("Please input query key word：")
+        Nature_BBC_crawl(query)
         dynamic_crawl(query)
+        selenium_crawl(query)
+        files = [f"{query}_scrapper_word_counts.json", f"{query}_selenium_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json"]
+        json_merge(query, *files)
         get_wordcloud(get_word_counts(query),query)
 
 if __name__ == "__main__":

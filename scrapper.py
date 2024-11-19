@@ -125,11 +125,15 @@ def save_to_json(word_counts, filename="calc.json"):
         json.dump(word_counts, f, indent=4)
     print(f"结果已保存到 {filename}")
 
-# 搜索特定单词并提取30个链接
-query = "Computer"
-urls = get_search_links(query)
-print("urls length: ", len(urls))
-print("urls :", urls)
-# 统计单词并保存
-word_counts = count_words_in_articles(urls)
-save_to_json(word_counts)
+def main():
+    # 搜索特定单词并提取30个链接
+    query = "Computer"
+    urls = get_search_links(query)
+    print("urls length: ", len(urls))
+    print("urls :", urls)
+    # 统计单词并保存
+    word_counts = count_words_in_articles(urls)
+    save_to_json(word_counts)
+
+if __name__ == "__main__":
+    main()
