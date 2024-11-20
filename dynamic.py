@@ -1,7 +1,7 @@
 from word_cloud import get_word_counts,get_wordcloud
 from scrapper import get_search_links,count_words_in_articles,save_to_json
-from selenium_scraper import selenium_crawl
-from Nature_BBC_scraper import selenium_crawl
+from selenium_scraper import selenium_crawl as Google_Bing_Duckduckgo_selenium_crawl
+from Nature_BBC_scraper import selenium_crawl as Nature_BBC_selenium_crawl
 import json
 from collections import defaultdict
 from Baidu_scrapper import process_keyword
@@ -46,7 +46,21 @@ def Nature_BBC_crawl(query):
         link_count = 10
 
 
-    selenium_crawl(query, source, link_count)
+    Nature_BBC_selenium_crawl(query, source, link_count)
+
+def Google_Bing_Duckduckgo_crawl(query):
+    print("Google_Bing_Duckduckgo_crawl:")
+    engine = input("Please input search engine (google/bing/duckduckgo): ").lower()
+    try:
+        start_index = int(input("Please input the number of links to skip (e.g., 0, 10): "))
+        link_count = int(input("Please input the number of links to retrieve (e.g., 10, 20, 30): "))
+        if start_index < 0 or link_count <= 0:
+            raise ValueError("Invalid input for start index or link count.")
+    except ValueError as e:
+        print(f"Invalid input: {e}. Defaulting to start_index=0 and link_count=30.")
+        start_index = 0
+        link_count = 30
+    Google_Bing_Duckduckgo_selenium_crawl(query, engine, start_index, link_count)
 
 def Baidu_crawl(query):
     print("Baidu_crawl:")
@@ -74,7 +88,7 @@ def main():
         query = input("Please input query key word：")
         Nature_BBC_crawl(query)
         dynamic_crawl(query)
-        selenium_crawl(query)
+        Google_Bing_Duckduckgo_crawl(query)
         Baidu_crawl(query)
         files = [f"{query}_scrapper_word_counts.json", f"{query}_selenium_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json",f"{query}_Baidu_word_counts.json"]
         json_merge(query, *files)

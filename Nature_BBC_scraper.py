@@ -25,7 +25,7 @@ def init_browser():
     chrome_options.add_argument("--disable-gpu")  # 禁用 GPU 加速
     chrome_options.add_argument("--no-sandbox")  # 禁用沙盒模式
     chrome_options.add_argument("--disable-dev-shm-usage")  # 禁用 /dev/shm 使用
-    service = Service("C:/Program Files/Google/Chrome/Application/chromedriver.exe")  # 替换为你的 ChromeDriver 路径
+    service = Service("D:\Anaconda/chromedriver.exe")  # 替换为你的 ChromeDriver 路径
     browser = webdriver.Chrome(service=service, options=chrome_options)
     return browser
 
