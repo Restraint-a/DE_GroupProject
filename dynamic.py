@@ -5,8 +5,15 @@ from Nature_BBC_scraper import selenium_crawl as Nature_BBC_selenium_crawl
 import json
 from collections import defaultdict
 from Baidu_scrapper import process_keyword
+from nltk import pos_tag
+from nltk.tokenize import word_tokenize
+import nltk
 
 def json_merge(query, *files):
+
+    # 允许的词性标签
+    allowed_pos = {"NN", "NNS", "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "JJ", "JJR", "JJS"}
+
         # 创建一个默认字典，用于存储合并后的结果
     merged_data = defaultdict(int)
 
@@ -25,6 +32,18 @@ def json_merge(query, *files):
             print(f"Warning: File {file_name} not found and will be skipped.")
         except json.JSONDecodeError:
             print(f"Warning: File {file_name} is not a valid JSON and will be skipped.")
+
+    # 词性过滤
+    filtered_data = defaultdict(int)
+    for word, count in merged_data.items():
+        # 去掉长度小于等于2的单词
+        if len(word) <= 2:
+            continue
+
+        # 对单词进行词性标注
+        tagged = pos_tag(word_tokenize(word))
+        if tagged and tagged[0][1] in allowed_pos:
+            filtered_data[word] = count
 
     output_file = f"{query}_word_counts.json"
     # 将合并后的数据保存到新的JSON文件中
