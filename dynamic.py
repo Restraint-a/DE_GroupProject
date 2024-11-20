@@ -4,6 +4,7 @@ from selenium_scraper import selenium_crawl
 from Nature_BBC_scraper import selenium_crawl
 import json
 from collections import defaultdict
+from Baidu_scrapper import process_keyword
 
 def json_merge(query, *files):
         # 创建一个默认字典，用于存储合并后的结果
@@ -33,6 +34,7 @@ def json_merge(query, *files):
     print(f"Files have been successfully merged into {output_file.name}")
 
 def Nature_BBC_crawl(query):
+    print("Nature_BBC_crawl:")
     source = input("请选择数据来源 (nature/bbc): ").lower()
 
     try:
@@ -45,6 +47,13 @@ def Nature_BBC_crawl(query):
 
 
     selenium_crawl(query, source, link_count)
+
+def Baidu_crawl(query):
+    print("Baidu_crawl:")
+    num_pages = int(input("请输入您想要查询的页数（默认为10）：") or 10)
+
+    # 调用处理函数
+    process_keyword(query, num_pages)
 
 
 def dynamic_crawl(query):
@@ -66,7 +75,8 @@ def main():
         Nature_BBC_crawl(query)
         dynamic_crawl(query)
         selenium_crawl(query)
-        files = [f"{query}_scrapper_word_counts.json", f"{query}_selenium_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json"]
+        Baidu_crawl(query)
+        files = [f"{query}_scrapper_word_counts.json", f"{query}_selenium_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json",f"{query}_Baidu_word_counts.json"]
         json_merge(query, *files)
         get_wordcloud(get_word_counts(query),query)
 
