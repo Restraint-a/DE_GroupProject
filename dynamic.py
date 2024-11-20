@@ -90,7 +90,7 @@ def main():
         dynamic_crawl(query)
         Google_Bing_Duckduckgo_crawl(query)
         Baidu_crawl(query)
-        files = [f"{query}_scrapper_word_counts.json", f"{query}_selenium_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json",f"{query}_Baidu_word_counts.json"]
+        files = [f"{query}_scrapper_word_counts.json", f"{query}_duckduckgo_word_counts.json", f"{query}_bing_word_counts.json", f"{query}_google_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json",f"{query}_Baidu_word_counts.json"]
         json_merge(query, *files)
         get_wordcloud(get_word_counts(query),query)
 
