@@ -74,7 +74,7 @@ def fetch_article_text(url):
 
         # 获取页面的所有文本
         text = " ".join([p.get_text() for p in soup.find_all("p")])
-        print("text: ", text)
+        #print("text: ", text)
         # 筛选仅包含英文字符的内容
         english_text = re.sub(r"[^a-zA-Z\s]", "", text)
         return english_text

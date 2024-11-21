@@ -106,10 +106,10 @@ def dynamic_crawl(query):
 def main():
     while True:
         query = input("Please input query key word：")
-        Nature_BBC_crawl(query)
-        dynamic_crawl(query)
-        Google_Bing_Duckduckgo_crawl(query)
-        Baidu_crawl(query)
+        #Nature_BBC_crawl(query)
+        #dynamic_crawl(query)
+        #Google_Bing_Duckduckgo_crawl(query)
+        #Baidu_crawl(query)
         yahoo_crawl(query)
         files = [f"{query}_scrapper_word_counts.json", f"{query}_duckduckgo_word_counts.json", f"{query}_bing_word_counts.json", f"{query}_google_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json",f"{query}_Baidu_word_counts.json",f"{query}_yahoo_word_counts.json"]
         json_merge(query, *files)
