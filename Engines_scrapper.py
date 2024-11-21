@@ -139,6 +139,19 @@ def generate_word_cloud(word_counts, title):
     else:
         print(f"Not enough data to generate {title} word cloud")
 
+def yahoo_crawl(query):
+    print("yahoo_crawl:")
+    max_pages = int(input("Please enter the number of pages to crawl: "))
+
+    engines = ["yahoo"]
+    all_word_counts = {}
+
+    for engine in engines:
+        urls = get_search_links(query, engine, max_pages=max_pages)  # 使用用户输入的页数
+        word_counts = count_words_in_articles(urls)
+        all_word_counts[engine] = word_counts
+        save_to_json(word_counts, f"{query}_{engine}_word_counts.json")
+
 def main():
     # 获取用户输入的搜索词汇和爬取页数
     query = input("Please enter the search term: ")

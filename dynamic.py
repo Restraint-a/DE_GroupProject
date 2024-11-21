@@ -5,6 +5,7 @@ from Nature_BBC_scraper import selenium_crawl as Nature_BBC_selenium_crawl
 import json
 from collections import defaultdict
 from Baidu_scrapper import process_keyword
+from Engines_scrapper import yahoo_crawl
 from nltk import pos_tag
 from nltk.tokenize import word_tokenize
 import nltk
@@ -109,7 +110,8 @@ def main():
         dynamic_crawl(query)
         Google_Bing_Duckduckgo_crawl(query)
         Baidu_crawl(query)
-        files = [f"{query}_scrapper_word_counts.json", f"{query}_duckduckgo_word_counts.json", f"{query}_bing_word_counts.json", f"{query}_google_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json",f"{query}_Baidu_word_counts.json"]
+        yahoo_crawl(query)
+        files = [f"{query}_scrapper_word_counts.json", f"{query}_duckduckgo_word_counts.json", f"{query}_bing_word_counts.json", f"{query}_google_word_counts.json",f"{query}_bbc_word_counts.json",f"{query}_nature_word_counts.json",f"{query}_Baidu_word_counts.json",f"{query}_yahoo_word_counts.json"]
         json_merge(query, *files)
         get_wordcloud(get_word_counts(query),query)
 
